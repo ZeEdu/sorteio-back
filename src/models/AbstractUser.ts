@@ -1,3 +1,3 @@
-class AbstractUser {
-  constructor(private username: string, private email: string) {}
+export default class AbstractUser {
+  constructor(public nome: string, public email: string) {}
 }

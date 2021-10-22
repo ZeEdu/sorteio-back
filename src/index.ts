@@ -1,20 +1,25 @@
-import express, { Express, Request, Response } from "express";
-import helmet from "helmet";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { MongoClient } from "mongodb";
+import app from "./app";
+import UserDAO from "./dao/UserDAO";
 
 const PORT = process.env.PORT || 3000;
-const app: Express = express();
+const uri =
+  "mongodb+srv://eduardo:eduardo@cluster0.m0kue.mongodb.net/sorteio?retryWrites=true&w=majority";
 
-app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const client = new MongoClient(uri);
+const run = async () => {
+  client
+    .connect()
+    .then(async (result) => {
+      await UserDAO.injectDB(result);
+      app.listen(PORT, () => {
+        console.log(`Application Running at port ${PORT}`);
+      });
+    })
+    .catch((err: any) => {
+      console.error(err.stack);
+      process.exit(1);
+    });
+};
 
-const newUser = new CreateUser("3123131", "eduardo");
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("<h1>Hello World</h1>");
-});
-
-app.listen(PORT, () => console.log(`Running on ${PORT}`));
+run();

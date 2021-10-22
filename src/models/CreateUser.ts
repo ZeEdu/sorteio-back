@@ -1,1 +1,0 @@
-class CreateUser extends AbstractUser {}
