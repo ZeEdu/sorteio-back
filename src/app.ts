@@ -18,8 +18,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // app.use(cors());
 
-// app.options("*", cors())
-
 app.use("/api/usuarios", cors(), usuarios);
 app.use("/api/sorteio", cors(), sorteio);
 
