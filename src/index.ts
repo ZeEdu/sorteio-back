@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import app from "./app";
 import UsuariosDAO from "./dao/UserDAO";
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 80;
 const uri = process.env.MONGOCONNECTION;
 
 const client = new MongoClient(uri ? uri : "");

@@ -16,10 +16,10 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// app.use(cors());
+app.use(cors());
 
-app.use("/api/usuarios", cors(), usuarios);
-app.use("/api/sorteio", cors(), sorteio);
+app.use("/api/usuarios", usuarios);
+app.use("/api/sorteio", sorteio);
 
 app.use("/", (req: Request, res: Response) => {
   res.send("<h1>Hello World</h1>");
