@@ -3,7 +3,8 @@ import app from "./app";
 import UsuariosDAO from "./dao/UsuariosDAO";
 
 const PORT = process.env.PORT || 80;
-const uri = process.env.MONGOCONNECTION;
+const uri =
+  "mongodb+srv://eduardo:eduardo@cluster0.m0kue.mongodb.net/sorteio?retryWrites=true&w=majority";
 
 const client = new MongoClient(uri ? uri : "");
 const run = async () => {
