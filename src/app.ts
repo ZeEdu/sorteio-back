@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 import cors from "cors";
 
-import users from "./routes/Users.route";
+import usuarios from "./routes/Usuarios.route";
 import sorteio from "./routes/Sorteio.route";
 
 dotenv.config();
@@ -17,7 +17,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/api/users", users);
+app.use("/api/usuarios", usuarios);
 app.use("/api/sorteio", sorteio);
 
 app.use("/", (req: Request, res: Response) => {

@@ -1,82 +1,97 @@
-import {
-  AggregateOptions,
-  Collection,
-  Filter,
-  MongoClient,
-  ObjectId,
-} from "mongodb";
-import User from "../models/User";
+import { Collection, Filter, MongoClient, ObjectId } from "mongodb";
+import Usuario from "../models/User";
 
-let users: Collection<User>;
+let usuariosCollection: Collection<Usuario>;
 
-class UserDAO {
+class UsuariosDAO {
   static async injectDB(conn: MongoClient) {
-    if (users) {
+    if (usuariosCollection) {
       return;
     }
     try {
-      users = await conn.db(process.env.SUMMONERS_NS).collection("users");
+      usuariosCollection = await conn
+        .db(process.env.SUMMONERS_NS)
+        .collection("users");
     } catch (e) {
       console.error(`Unable to establish collection handles in build: ${e}`);
     }
   }
-  static async getUsers(page: number = 0, limit: number = 10) {
+
+  static async limparUsuarios() {
     try {
-      const usersList = await users
+      await usuariosCollection.updateMany(
+        {},
+        {
+          $set: {
+            foiSelecionado: false,
+            temAmigoSecreto: false,
+          },
+        }
+      );
+      return { sucesso: true };
+    } catch (error) {
+      console.error(error);
+      return { error };
+    }
+  }
+  static async encontrarUsuarios(pagina: number = 0, limite: number = 10) {
+    try {
+      const listaUsuarios = await usuariosCollection
         .find()
-        .limit(limit)
-        .skip(page * 10)
+        .limit(limite)
+        .skip(pagina * 10)
         .toArray();
 
-      const totalUsers = await users.countDocuments();
+      const totalUsuarios = await usuariosCollection.countDocuments();
       return {
-        usersList,
-        totalUsers,
+        listaUsuarios,
+        totalUsuarios,
       };
     } catch (error) {
       console.error(error);
-      return { usersList: [], totalUsers: 0 };
+      return { listaUsuarios: [], totalUsuarios: 0 };
     }
   }
 
-  static async findUserById(id: string) {
-    return users.findOne({ _id: new ObjectId(id) });
+  static async encontrarUsuarioPorId(id: string) {
+    return usuariosCollection.findOne({ _id: new ObjectId(id) });
   }
 
-  static async findByUsername(username: string) {
-    return users.findOne({ username });
+  static async encontrarPorNome(username: string) {
+    return usuariosCollection.findOne({ username });
   }
-  static async findByEmail(email: string) {
-    return users.findOne({ email });
+  static async encontrarPorEmail(email: string) {
+    return usuariosCollection.findOne({ email });
   }
 
-  static async insertUser(user: User) {
+  static async inserirUsuario(user: Usuario) {
     try {
-      await users.insertOne({
+      await usuariosCollection.insertOne({
         nome: user.nome,
         email: user.email,
         temAmigoSecreto: user.temAmigoSecreto,
         foiSelecionado: user.foiSelecionado,
       });
-      return { success: true };
+      return { sucesso: true };
     } catch (e) {
       return { error: e };
     }
   }
 
-  static async updateUser(user: User) {
+  static async atualizarUsuario(user: Usuario) {
     try {
-      await users.updateOne(
+      await usuariosCollection.updateOne(
         { _id: user._id },
         {
           $set: {
             nome: user.nome,
             email: user.email,
             temAmigoSecreto: user.temAmigoSecreto,
+            foiSelecionado: user.foiSelecionado,
           },
         }
       );
-      return { success: true };
+      return { sucesso: true };
     } catch (e) {
       return { error: e };
     }
@@ -84,31 +99,30 @@ class UserDAO {
 
   static async deleteUser(id: string) {
     try {
-      await users.deleteOne({ _id: new ObjectId(id) });
+      await usuariosCollection.deleteOne({ _id: new ObjectId(id) });
       return { success: true };
     } catch (e) {
       console.error(e);
       return { error: e };
     }
   }
-  static async getDocumentsCount() {
-    return users.countDocuments();
+  static async contarDocumentos() {
+    return usuariosCollection.countDocuments();
   }
 
-  static async findAvailableUser() {
-    return users.findOne({ temAmigoSecreto: false });
+  static async encontrarUsuarioDisponivel() {
+    return usuariosCollection.findOne({ temAmigoSecreto: false });
   }
 
-  static async findUsersWithoutSecretFriendCount() {
-    return users.countDocuments({ temAmigoSecreto: false });
+  static async contarUsuariosSemAmigoSecreto() {
+    return usuariosCollection.countDocuments({ temAmigoSecreto: false });
   }
-  static async getRandomSelectableFriend(id: ObjectId) {
-    const filter: Filter<User> = { _id: { $ne: id }, foiSelecionado: false };
-
-    return users
+  static async encontrarUsuarioAleatorio(id: ObjectId) {
+    const filter: Filter<Usuario> = { _id: { $ne: id }, foiSelecionado: false };
+    return usuariosCollection
       .aggregate([{ $match: filter }, { $sample: { size: 1 } }])
       .toArray();
   }
 }
 
-export default UserDAO;
+export default UsuariosDAO;

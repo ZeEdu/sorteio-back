@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import app from "./app";
-import UserDAO from "./dao/UserDAO";
+import UsuariosDAO from "./dao/UserDAO";
 
 const PORT = process.env.PORT || 3000;
 const uri =
@@ -11,7 +11,7 @@ const run = async () => {
   client
     .connect()
     .then(async (result) => {
-      await UserDAO.injectDB(result);
+      await UsuariosDAO.injectDB(result);
       app.listen(PORT, () => {
         console.log(`Application Running at port ${PORT}`);
       });

@@ -1,71 +1,49 @@
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import UserDAO from "../dao/UserDAO";
-import User from "../models/User";
-import Utils from "../utils";
+import UsuariosDAO from "../dao/UserDAO";
+import Usuario from "../models/User";
 
 class UserController {
-  static async getAllUsers(req: Request, res: Response) {
-    console.log(req.params);
-    const page = req.query["page"];
-    let pageNumber = 0;
-    if (page && Number(page) > 0) {
-      pageNumber = Number(page);
+  static async pegarTodosUsuarios(req: Request, res: Response) {
+    const pagina = req.query["pagina"];
+    let numeroPagina = 0;
+    if (pagina && Number(pagina) > 0) {
+      numeroPagina = Number(pagina);
     }
-
-    const usersPerPage = 10;
-
-    console.log("pageNumber", pageNumber);
-    const { usersList, totalUsers } = await UserDAO.getUsers(
-      pageNumber,
-      usersPerPage
-    );
+    const usuariosPorPagina = 10;
+    const { listaUsuarios, totalUsuarios } =
+      await UsuariosDAO.encontrarUsuarios(numeroPagina, usuariosPorPagina);
 
     const response = {
-      users: usersList.map((user) => ({
+      users: listaUsuarios.map((user) => ({
         id: user._id?.toString(),
         nome: user.nome,
         email: user.email,
         temAmigoSecreto: user.temAmigoSecreto,
         foiSelecionado: user.foiSelecionado,
       })),
-      userCount: totalUsers,
-      usersPerPage,
-      page: pageNumber,
+      qntUsuarios: totalUsuarios,
+      usuariosPorPagina: usuariosPorPagina,
+      pagina: numeroPagina,
     };
     return res.status(200).json(response);
   }
 
-  static async getUser(req: Request, res: Response) {
-    const id = req.params["id"];
-    if (!id) {
-      return res.status(400).json({ error: "Id não informada" });
-    }
-
-    const findResult = await UserDAO.findUserById(id);
-
-    if (!findResult) {
-      return res.status(400).json({ resultado: "Usuário Não Encontrado" });
-    }
-
-    return res.status(200).json(findResult);
-  }
-
-  static async create(req: Request, res: Response) {
+  static async criar(req: Request, res: Response) {
     try {
-      const username: string = req.body["name"];
+      const nome: string = req.body["nome"];
       const email: string = req.body["email"];
       const errors = [];
 
-      if (!username) {
+      if (!nome) {
         errors.push("Nome de usuário não informado");
       }
 
-      if (username && username.length > 240) {
+      if (nome && nome.length > 240) {
         errors.push("Nome de usuário maior que 240 caracteres");
       }
 
-      if (username && username.length < 5) {
+      if (nome && nome.length < 5) {
         errors.push("Nome de usuário menor que 5 caracteres");
       }
 
@@ -74,41 +52,44 @@ class UserController {
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({ errors });
+        return res.status(400).json({ errors: errors });
+      }
+      const emailRegex = new RegExp(
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+      if (!emailRegex.test(email)) {
+        errors.push("Formato de email inválido");
       }
 
-      // if (!Utils.emailRegex().test(email)) {
-      //   errors.push({ emailFormat: "Formato de email inválido" });
-      // }
+      const encontrarPorEmail = await UsuariosDAO.encontrarPorEmail(email);
 
-      const searchByEmailResult = await UserDAO.findByEmail(email);
-
-      if (searchByEmailResult) {
+      if (encontrarPorEmail) {
         errors.push("Este email já esta sendo utilizado");
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({ errors });
+        return res.status(400).json({ errors: errors });
       }
 
-      const createUser = new User(username, email, false, false);
-      const insertUser = await UserDAO.insertUser(createUser);
-
-      if (!insertUser.success) {
-        errors.push(insertUser.error);
+      const criarUsuario = new Usuario(nome, email, false, false);
+      const inserirUsuarioResultado = await UsuariosDAO.inserirUsuario(
+        criarUsuario
+      );
+      if (!inserirUsuarioResultado.sucesso) {
+        errors.push(inserirUsuarioResultado.error);
       }
 
-      const getUserFromDB = await UserDAO.findByEmail(email);
-      if (!getUserFromDB) {
+      const retornaUsuarioDoBanco = await UsuariosDAO.encontrarPorEmail(email);
+      if (!retornaUsuarioDoBanco) {
         errors.push("Error Interno, Tente novamente mais tarde");
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({ errors });
+        return res.status(400).json({ errors: errors });
       }
 
       return res.status(201).json({
-        data: getUserFromDB,
+        data: retornaUsuarioDoBanco,
       });
     } catch (error) {
       console.error(error);
@@ -118,22 +99,22 @@ class UserController {
     }
   }
 
-  static async update(req: Request, res: Response) {
+  static async atualizar(req: Request, res: Response) {
     try {
       const id = req.body["id"];
-      const name = req.body["name"];
+      const nome = req.body["nome"];
       const email = req.body["email"];
       const errors = [];
 
-      if (!name) {
+      if (!nome) {
         errors.push("Nome de usuário não informado");
       }
 
-      if (name && name.length > 240) {
+      if (nome && nome.length > 240) {
         errors.push("Nome de usuário maior que 240 caracteres");
       }
 
-      if (name && name.length < 5) {
+      if (nome && nome.length < 5) {
         errors.push("Nome de usuário menor que 5 caracteres");
       }
 
@@ -141,54 +122,57 @@ class UserController {
         errors.push("Email não informado");
       }
 
-      const getById = await UserDAO.findUserById(id);
+      const usuarioPorId = await UsuariosDAO.encontrarUsuarioPorId(id);
 
-      if (!getById) {
+      if (!usuarioPorId) {
         return res
           .status(400)
           .json("Usuário referente a id informada não foi encontrado");
       }
-      if (getById._id?.toString() !== id) {
+      if (usuarioPorId._id?.toString() !== id) {
         errors.push("Dados informados não são referentes ao mesmo usuário");
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({ errors });
+        return res.status(400).json({ erros: errors });
       }
 
-      const updatedUser = new User(
-        name,
+      const updatedUser = new Usuario(
+        nome,
         email,
-        getById.temAmigoSecreto,
-        getById.foiSelecionado,
+        usuarioPorId.temAmigoSecreto,
+        usuarioPorId.foiSelecionado,
         new ObjectId(id)
       );
 
-      const updateResult = await UserDAO.updateUser(updatedUser);
-      if (!updateResult.success) {
-        errors.push(updateResult.error);
+      const atualizarResultado = await UsuariosDAO.atualizarUsuario(
+        updatedUser
+      );
+      if (!atualizarResultado.sucesso) {
+        errors.push(atualizarResultado.error);
       }
 
-      const getUserFromDB = await UserDAO.findByEmail(updatedUser.email);
-      if (!getUserFromDB) {
+      const encontrarUsuarioNoBanco = await UsuariosDAO.encontrarPorEmail(
+        updatedUser.email
+      );
+      if (!encontrarUsuarioNoBanco) {
         errors.push(
           "Um erro interno aconteceu ao atualizar o usuário. Por favor, tente novamente mais tarde"
         );
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({ errors });
+        return res.status(400).json({ erros: errors });
       }
 
       return res.status(202).json({ user: updatedUser });
     } catch (error) {
-      console.log(error);
       return res
         .status(400)
         .json({ errors: ["Erro Interno. Tente novamente mais tarde."] });
     }
   }
-  static async delete(req: Request, res: Response) {
+  static async deletar(req: Request, res: Response) {
     try {
       const id = req.params["id"];
       const errors = [];
@@ -199,7 +183,7 @@ class UserController {
       if (errors.length > 0) {
         return res.status(400).json({ errors });
       }
-      const queryByIdResult = await UserDAO.findUserById(id);
+      const queryByIdResult = await UsuariosDAO.encontrarUsuarioPorId(id);
       if (!queryByIdResult) {
         errors.push("Usuário não encontrado.");
       }
@@ -208,7 +192,7 @@ class UserController {
         return res.status(400).json({ errors });
       }
 
-      const deleteResult = await UserDAO.deleteUser(id);
+      const deleteResult = await UsuariosDAO.deleteUser(id);
       if (!deleteResult) {
         errors.push("Usuário não encontrado.");
       }
