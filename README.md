@@ -18,4 +18,4 @@ O comando abaixo pode ser utilizado para rodar o servido em modo de desenvolvime
 npm run serve;
 ```
 
-Por padrão o aplicativo roda na porta 80 do [localhost](http://localhost:80/)
+Por padrão o aplicativo roda na porta 3000 do [localhost](http://localhost:3000/)
