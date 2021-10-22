@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import app from "./app";
-import UsuariosDAO from "./dao/UserDAO";
+import UsuariosDAO from "./dao/UsuariosDAO";
 
 const PORT = process.env.PORT || 80;
 const uri = process.env.MONGOCONNECTION;

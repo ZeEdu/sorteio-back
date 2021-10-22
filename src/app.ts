@@ -22,7 +22,7 @@ app.use("/api/usuarios", usuarios);
 app.use("/api/sorteio", sorteio);
 
 app.use("/", (req: Request, res: Response) => {
-  res.send("<h1>Hello World</h1>");
+  res.json({ greetings: "Hello" });
 });
 app.use("*", (req: Request, res: Response) => {
   res.status(404).json({ error: "Not Found" });

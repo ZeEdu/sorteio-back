@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 
-import UsuariosDAO from "../dao/UserDAO";
-import Usuario from "../models/User";
+import UsuariosDAO from "../dao/UsuariosDAO";
+import Usuario from "../models/Usuario";
 
 class SorteioController {
   static async criarSorteio(req: Request, res: Response) {

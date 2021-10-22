@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import UsuariosDAO from "../dao/UserDAO";
-import Usuario from "../models/User";
+import UsuariosDAO from "../dao/UsuariosDAO";
+import Usuario from "../models/Usuario";
 
 class UserController {
   static async pegarTodosUsuarios(req: Request, res: Response) {

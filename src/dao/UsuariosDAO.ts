@@ -1,5 +1,5 @@
 import { Collection, Filter, MongoClient, ObjectId } from "mongodb";
-import Usuario from "../models/User";
+import Usuario from "../models/Usuario";
 
 let usuariosCollection: Collection<Usuario>;
 
